@@ -20,6 +20,9 @@ set ( DRAWPILE_PROTO_DEFAULT_PORT 27750 )
 ###
 include ( "config/Names.cmake" )
 
+include_directories("/home/noname/smart/adhoc")
+#target_link_libraries("/home/noname/smart/adhoc/libadhoc.a")
+
 ### options ###
 option ( CLIENT "Compile client" ON )
 option ( SERVER "Compile UI-less server" ON )

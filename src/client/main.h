@@ -20,6 +20,7 @@
 #define DRAWPILEAPP_H
 
 #include <QApplication>
+#include <QTransform>
 
 class DrawpileApp : public QApplication {
 Q_OBJECT

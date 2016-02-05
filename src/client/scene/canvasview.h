@@ -77,6 +77,8 @@ class CanvasView : public QGraphicsView
 		//! Is this point (scene coordinates) inside the viewport?
 		bool isPointVisible(const QPointF &point) const;
 
+    void setFullscreenTransform(const QTransform &transform);
+
 	signals:
 		//! An image has been dropped on the widget
 		void imageDropped(const QImage &image);
@@ -143,6 +145,8 @@ class CanvasView : public QGraphicsView
 		void zoomout();
 
 		void setToolCursor(const QCursor &cursor);
+
+    void setFullscreen(bool enable);
 
 	protected:
 		void enterEvent(QEvent *event);
@@ -258,6 +262,9 @@ class CanvasView : public QGraphicsView
 		bool _touching, _touchRotating;
 		qreal _touchStartZoom, _touchStartRotate;
 		qreal _dpi;
+
+    QTransform _fullscreenTransform;
+    bool _fullscreen;
 };
 
 }

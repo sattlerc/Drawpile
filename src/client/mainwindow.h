@@ -22,8 +22,11 @@
 #include <QMainWindow>
 #include <QElapsedTimer>
 #include <QUrl>
+#include <QSocketNotifier>
 
 #include "tools/tool.h"
+
+#include "adhoc.h"
 
 class QActionGroup;
 class QMessageBox;
@@ -237,6 +240,9 @@ private:
 	ShortcutDetector *_tempToolSwitchShortcut;
 
 	Document *m_doc;
+
+  adhoc *_adhoc;
+  QSocketNotifier *_adhoc_notifier;
 };
 
 #endif

@@ -46,6 +46,8 @@
 
 #include <ColorWheel>
 
+#include <iostream>
+
 DrawpileApp::DrawpileApp(int &argc, char **argv)
 	: QApplication(argc, argv)
 {
@@ -68,6 +70,7 @@ DrawpileApp::DrawpileApp(int &argc, char **argv)
 
 		cfg.setValue("username", defaultname);
 	}
+  
 	setWindowIcon(QIcon(":/icons/drawpile.png"));
 }
 
@@ -241,7 +244,39 @@ int main(int argc, char *argv[]) {
 		initTranslations(locale);
 	}
 
-	const QStringList args = app.arguments();
+  QCommandLineParser parser;
+  parser.addHelpOption();
+  parser.addOption({"fullscreen-transform", QCoreApplication::translate("main", "Load fullscreen transform from <path>. Format is nine reals separated by line breaks or spaces."), "path"});
+  parser.addOption({"whiteboard-device", QCoreApplication::translate("main", "Hook up with whiteboard via input device <path>. Disable with xinput first to avoid interference."), "path"});
+  parser.process(app);
+
+  QSettings cfg;
+
+  QString fullscreenTransformFile = parser.value("fullscreen-transform");
+  if (!fullscreenTransformFile.isEmpty()) {
+    QFile file(fullscreenTransformFile);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+      qCritical("Could not open read fullscreen transform file!");
+      return -1;
+    }
+
+    QTextStream in(&file);
+    qreal m11, m12, m13, m21, m22, m23, m31, m32, m33;
+    in >> m11 >> m12 >> m13 >> m21 >> m22 >> m23 >> m31 >> m32 >> m33;
+    std::cout << m11 << " " << m12 << " " << m13 << " " << m21 << " " << m22 << " " << m23 << " " << m31 << " " << m32 << " " << m33 << " " << std::endl;
+    QTransform transform(m11, m12, m13, m21, m22, m23, m31, m32, m33);
+    if (in.status() != QTextStream::Ok) {
+      qCritical("Fullscreen transform file has wrong format!");
+      return -1;
+    }
+
+    cfg.setValue("settings/fullscreen-transform", transform);
+  }
+
+  QString eventDeviceFile = parser.value("whiteboard-device");
+  cfg.setValue("settings/whiteboard-device", eventDeviceFile);
+
+	const QStringList args = parser.positionalArguments();
 	if(args.count()>1) {
 		QUrl url(args.at(1));
 		if(url.scheme().length() <= 1) {

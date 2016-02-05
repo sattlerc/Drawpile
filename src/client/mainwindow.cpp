@@ -17,6 +17,10 @@
    along with Drawpile.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include <QApplication>
 #include <QMenuBar>
 #include <QToolBar>
@@ -235,8 +239,11 @@ MainWindow::MainWindow(bool restoreWindowPosition)
 
 #endif
 
+  QSettings cfg;
+  
 	// Create canvas view
 	_view = new widgets::CanvasView(this);
+  _view->setFullscreenTransform(cfg.value("settings/fullscreen-transform").value<QTransform>());
 	
 	connect(_dock_toolsettings->getLaserPointerSettings(), SIGNAL(pointerTrackingToggled(bool)), _view, SLOT(setPointerTracking(bool)));
 
@@ -248,7 +255,6 @@ MainWindow::MainWindow(bool restoreWindowPosition)
 
 	_splitter->addWidget(_view);
 	_splitter->setCollapsible(SPLITTER_WIDGET_IDX++, false);
-
 
 	connect(_dock_toolsettings, SIGNAL(sizeChanged(int)), _view, SLOT(setOutlineSize(int)));
 	connect(_dock_toolsettings, SIGNAL(subpixelModeChanged(bool)), _view, SLOT(setOutlineSubpixelMode(bool)));
@@ -277,7 +283,6 @@ MainWindow::MainWindow(bool restoreWindowPosition)
 
 	chatsplitter->setStretchFactor(0, 5);
 	chatsplitter->setStretchFactor(1, 1);
-	_splitter->addWidget(chatsplitter);
 
 	// Make sure the canvas gets the majority share of the splitter the first time
 	// (this if is just to so that the experimental QML canvas can be enabled/disabled easily)
@@ -385,10 +390,75 @@ MainWindow::MainWindow(bool restoreWindowPosition)
 
 	// Show self
 	show();
+
+  _adhoc = nullptr;
+  
+  QString dev = cfg.value("settings/whiteboard-device").value<QString>();
+  if (dev.isEmpty())
+    return;
+
+  int fd = ::open(dev.toLocal8Bit(), O_RDONLY | O_NONBLOCK);
+  if (fd < 0) {
+    qWarning() << "unable to open path " << dev;
+    return;
+  }
+  
+  _adhoc = adhoc_init(fd);
+  if (!_adhoc) {
+    ::close(fd);
+    return;
+  }
+  
+  adhoc_callbacks callbacks = {
+    // mouse down
+    [&](float x, float y) {
+      qDebug() << "mouse_down";
+    },
+
+    // mouse up
+    [&](float x, float y) {
+      qDebug() << "mouse_up";
+    },
+
+    // mouse move
+    [&](float x, float y) {
+      qDebug() << "mouse_move";
+    },
+
+    // select finger
+    [&]() {
+      qDebug() << "select_finger";
+    },
+
+    // select rubber
+    [&]() {
+      qDebug() << "select_rubber";
+    },
+
+    // select pen
+    [&](uint32_t colour) {
+      qDebug() << "select_pen";
+    }
+  };
+  
+  adhoc_set_callbacks(_adhoc, &callbacks);
+
+  _adhoc_notifier = new QSocketNotifier(fd, QSocketNotifier::Read);
+  QObject::connect(_adhoc_notifier, &QSocketNotifier::activated, [&]() {
+      adhoc_parse(_adhoc);
+    });
+  _adhoc_notifier->setEnabled(true);
 }
 
 MainWindow::~MainWindow()
 {
+  if (_adhoc) {
+    delete _adhoc_notifier;
+    int fd = adhoc_get_fd(_adhoc);
+    adhoc_exit(_adhoc);
+    ::close(fd);
+  }
+  
 #ifdef Q_OS_MAC
 	MacMenu::instance()->removeWindow(this);
 #endif
@@ -1488,12 +1558,16 @@ void MainWindow::toggleFullscreen()
 				(qobject_cast<QWidget*>(child))->hide();
 		}
 
-		showFullScreen();
+    _view->setFullscreen(true);
 
+    showFullScreen();
 	} else {
-		// Restore old state
+    // Restore old state
 		showNormal();
-		menuBar()->show();
+
+    _view->setFullscreen(false);
+
+    menuBar()->show();
 		_viewStatusBar->show();
 		_view->setFrameShape(QFrame::StyledPanel);
 		setGeometry(_fullscreen_oldgeometry);

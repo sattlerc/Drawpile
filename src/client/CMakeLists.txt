@@ -340,3 +340,5 @@ if (NOT CMAKE_BUILD_TYPE STREQUAL Debug)
 	endif()
 endif ( )
 
+target_link_libraries(${CLIENTNAME} "/home/noname/smart/adhoc/libadhoc.a")
+target_link_libraries(${CLIENTNAME} evdev)

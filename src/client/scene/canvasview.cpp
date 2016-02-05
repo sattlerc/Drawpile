@@ -51,7 +51,8 @@ CanvasView::CanvasView(QWidget *parent)
 	_hotBorderTop(false),
 	_enableTouchScroll(true), _enableTouchPinch(true), _enableTouchTwist(true),
 	_touching(false), _touchRotating(false),
-	_dpi(96)
+  _dpi(96),
+  _fullscreen(false)
 {
 	viewport()->setAcceptDrops(true);
 #ifdef Q_OS_MAC // Standard touch events seem to work better with mac touchpad
@@ -116,6 +117,9 @@ void CanvasView::zoomout()
  */
 void CanvasView::setZoom(qreal zoom)
 {
+  if(_fullscreen)
+    return;
+  
 	if(zoom<=0)
 		return;
 
@@ -411,22 +415,6 @@ void CanvasView::penMoveEvent(const QPointF &pos, float pressure, Qt::MouseButto
 		moveDrag(pos.x(), pos.y());
 
 	} else {
-		// Hot border detection. This is used to show the menu bar in fullscreen mode
-		// when the pointer is brought to the top of the screen.
-		if(!_pendown) {
-			if(_hotBorderTop) {
-				if(pos.y() > 30) {
-					emit hotBorder(false);
-					_hotBorderTop = false;
-				}
-			} else {
-				if(pos.y() < 3) {
-					emit hotBorder(true);
-					_hotBorderTop = true;
-				}
-			}
-		}
-
 		paintcore::Point point = mapToScene(pos, pressure);
 		updateOutline(point);
 		if(!_prevpoint.intSame(point)) {
@@ -580,6 +568,8 @@ void CanvasView::setTouchGestures(bool scroll, bool pinch, bool twist)
 
 void CanvasView::touchEvent(QTouchEvent *event)
 {
+  printf("test\n");
+  
 	event->accept();
 
 	switch(event->type()) {
@@ -851,9 +841,11 @@ void CanvasView::moveDrag(int x, int y)
 		}
 	} else {
 		QScrollBar *ver = verticalScrollBar();
-		ver->setSliderPosition(ver->sliderPosition()+dy);
+		//ver->setSliderPosition(ver->sliderPosition()+dy);
 		QScrollBar *hor = horizontalScrollBar();
-		hor->setSliderPosition(hor->sliderPosition()+dx);
+		//hor->setSliderPosition(hor->sliderPosition()+dx);
+    //if (_fullscreen)
+    //  setTransform(_fullscreenTransform);
 	}
 
 	_dragx = x;
@@ -924,4 +916,27 @@ void CanvasView::showEvent(QShowEvent *event)
 	}
 }
 
+void CanvasView::setFullscreenTransform(const QTransform &transform)
+{
+  _fullscreenTransform = transform;
+}
+
+void CanvasView::setFullscreen(bool enable) {
+  _fullscreen = enable;
+
+  if(enable) {
+		QScrollBar *ver = verticalScrollBar();
+		ver->setSliderPosition(0);
+		QScrollBar *hor = horizontalScrollBar();
+		hor->setSliderPosition(0);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setTransform(_fullscreenTransform);
+  } else {
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    setZoom(_zoom);
+  }
+}
+  
 }
