@@ -512,7 +512,7 @@ void MainWindow::mouse_move(float x, float y) {
 }
 
 void MainWindow::select_finger() {
-  //_dock_toolsettings->selectTool(tools::Tool::Type::ERASER);
+  _dock_toolsettings->selectTool(tools::Tool::Type::ERASER);
   tools::EraserSettings *settings = dynamic_cast<tools::EraserSettings*>
     (_dock_toolsettings->getToolSettingsPage(tools::Tool::Type::ERASER));
   settings->setSize(2);
@@ -541,7 +541,9 @@ void MainWindow::select_pen(uint32_t c) {
 	//cfg.setValue("pressuresize", _ui->pressuresize->isChecked());
 	//cfg.setValue("pressureopacity", _ui->pressureopacity->isChecked());
 
-  QColor colour(c & 0xff, (c << 8) & 0xff, (c << 16) & 0xff);
+  printf("%06x\n", c);
+  QColor colour(c & 0xff, (c >> 8) & 0xff, (c >> 16) & 0xff);
+  qDebug() << "colour " << colour;
   _dock_toolsettings->setForegroundColor(colour);
 }
 
