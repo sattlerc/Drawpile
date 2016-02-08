@@ -23,6 +23,7 @@
 #include <QElapsedTimer>
 #include <QUrl>
 #include <QSocketNotifier>
+#include <QtGlobal>
 
 #include "tools/tool.h"
 
