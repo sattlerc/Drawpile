@@ -397,6 +397,8 @@ MainWindow::MainWindow(bool restoreWindowPosition)
   if (dev.isEmpty())
     return;
 
+  qInfo() << "Setting up whiteboard at " << dev;
+
   int fd = ::open(dev.toLocal8Bit(), O_RDONLY | O_NONBLOCK);
   if (fd < 0) {
     qWarning() << "unable to open path " << dev;
@@ -411,41 +413,51 @@ MainWindow::MainWindow(bool restoreWindowPosition)
   
   adhoc_callbacks callbacks = {
     // mouse down
-    [&](float x, float y) {
+    [](void *data, float x, float y) {
       qDebug() << "mouse_down";
+      reinterpret_cast<MainWindow*>(data)->mouse_down(x, y);
     },
 
     // mouse up
-    [&](float x, float y) {
+    [](void *data, float x, float y) {
       qDebug() << "mouse_up";
+      reinterpret_cast<MainWindow*>(data)->mouse_up(x, y);
     },
 
     // mouse move
-    [&](float x, float y) {
+    [](void *data, float x, float y) {
       qDebug() << "mouse_move";
+      reinterpret_cast<MainWindow*>(data)->mouse_move(x, y);
     },
 
     // select finger
-    [&]() {
+    [](void *data) {
       qDebug() << "select_finger";
+      reinterpret_cast<MainWindow*>(data)->select_finger();
     },
 
     // select rubber
-    [&]() {
+    [](void *data) {
       qDebug() << "select_rubber";
+      reinterpret_cast<MainWindow*>(data)->select_rubber();
     },
 
     // select pen
-    [&](uint32_t colour) {
+    [](void *data, uint32_t colour) {
       qDebug() << "select_pen";
+      reinterpret_cast<MainWindow*>(data)->select_pen(colour);
     }
   };
   
   adhoc_set_callbacks(_adhoc, &callbacks);
+  adhoc_set_data(_adhoc, this);
 
   _adhoc_notifier = new QSocketNotifier(fd, QSocketNotifier::Read);
   QObject::connect(_adhoc_notifier, &QSocketNotifier::activated, [&]() {
-      adhoc_parse(_adhoc);
+      if (adhoc_parse(_adhoc) < 0) {
+        qWarning() << "whiteboard device parse failed, disconnected?";
+        _adhoc_notifier->disconnect();
+      }
     });
   _adhoc_notifier->setEnabled(true);
 }
@@ -472,6 +484,65 @@ MainWindow::~MainWindow()
 		QDialog *child = qobject_cast<QDialog*>(obj);
 		delete child;
 	}
+}
+
+paintcore::Point MainWindow::map_point(float x, float y) {
+  QSettings cfg;
+  double ratio = cfg.value("settings/whiteboard_aspect_ratio").value<qreal>();
+
+  QSize size = m_doc->canvas()->layerStack()->size();
+  return paintcore::Point(x * size.width(), y * size.height(), 1);
+}
+
+void MainWindow::mouse_down(float x, float y) {
+  //m_doc->toolCtrl()->setActiveLayer(m_doc->canvas()->layerStack()->indexOf(0));
+  m_doc->toolCtrl()->startDrawing(map_point(x, y), 1);
+}
+
+void MainWindow::mouse_up(float x, float y) {
+  Q_UNUSED(x);
+  Q_UNUSED(y);
+  m_doc->toolCtrl()->endDrawing();
+}
+
+void MainWindow::mouse_move(float x, float y) {
+  if (m_doc->canvas() != nullptr) {
+    m_doc->toolCtrl()->continueDrawing(map_point(x, y), 1, false, false);
+  }
+}
+
+void MainWindow::select_finger() {
+  //_dock_toolsettings->selectTool(tools::Tool::Type::ERASER);
+  tools::EraserSettings *settings = dynamic_cast<tools::EraserSettings*>
+    (_dock_toolsettings->getToolSettingsPage(tools::Tool::Type::ERASER));
+  settings->setSize(2);
+}
+
+void MainWindow::select_rubber() {
+  _dock_toolsettings->selectTool(tools::Tool::Type::ERASER);
+  tools::EraserSettings *settings = dynamic_cast<tools::EraserSettings*>
+    (_dock_toolsettings->getToolSettingsPage(tools::Tool::Type::ERASER));
+  settings->setSize(25);
+}
+
+void MainWindow::select_pen(uint32_t c) {
+  _dock_toolsettings->selectTool(tools::Tool::Type::BRUSH);
+  tools::BrushSettings *settings = dynamic_cast<tools::BrushSettings*>
+    (_dock_toolsettings->getToolSettingsPage(tools::Tool::Type::BRUSH));
+  settings->setSize(1);
+  settings->setHardness(100);
+  // m_doc->toolCtrl()->setActiveTool(tools::Tool::Type::PEN);
+
+	//cfg.setValue("blendmode", _ui->blendmode->currentIndex());
+	//cfg.setValue("incremental", _ui->paintmodeIncremental->isChecked());
+	//cfg.setValue("size", _ui->brushsize->value());
+	//cfg.setValue("opacity", _ui->brushopacity->value());
+	//cfg.setValue("spacing", _ui->brushspacing->value());
+	//cfg.setValue("pressuresize", _ui->pressuresize->isChecked());
+	//cfg.setValue("pressureopacity", _ui->pressureopacity->isChecked());
+
+  QColor colour(c & 0xff, (c << 8) & 0xff, (c << 16) & 0xff);
+  _dock_toolsettings->setForegroundColor(colour);
 }
 
 void MainWindow::onCanvasChanged(canvas::CanvasModel *canvas)
@@ -1558,9 +1629,9 @@ void MainWindow::toggleFullscreen()
 				(qobject_cast<QWidget*>(child))->hide();
 		}
 
-    _view->setFullscreen(true);
-
     showFullScreen();
+
+    _view->setFullscreen(true);
 	} else {
     // Restore old state
 		showNormal();

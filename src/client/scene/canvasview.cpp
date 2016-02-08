@@ -29,6 +29,8 @@
 #include <QWindow>
 #include <QScreen>
 #include <QtMath>
+#include <QtDebug>
+#include <QDesktopWidget>
 
 #include "canvasview.h"
 #include "canvasscene.h"
@@ -793,7 +795,8 @@ bool CanvasView::isPointVisible(const QPointF &point) const
 
 void CanvasView::scrollTo(const QPoint& point)
 {
-	centerOn(point);
+  if (_fullscreen)
+    centerOn(point);
 }
 
 /**
@@ -803,6 +806,9 @@ void CanvasView::scrollTo(const QPoint& point)
  */
 void CanvasView::startDrag(int x,int y, ViewTransform mode)
 {
+  if (_fullscreen)
+    return;
+  
 	viewport()->setCursor(Qt::ClosedHandCursor);
 	_dragx = x;
 	_dragy = y;
@@ -817,6 +823,9 @@ void CanvasView::startDrag(int x,int y, ViewTransform mode)
  */
 void CanvasView::moveDrag(int x, int y)
 {
+  if (_fullscreen)
+    return;
+  
 	const int dx = _dragx - x;
 	const int dy = _dragy - y;
 
@@ -855,6 +864,9 @@ void CanvasView::moveDrag(int x, int y)
 //! Stop dragging
 void CanvasView::stopDrag()
 {
+  if (_fullscreen)
+    return;
+  
 	if(_dragbtndown != DRAG_NOTRANSFORM)
 		viewport()->setCursor(Qt::OpenHandCursor);
 	else
@@ -931,11 +943,44 @@ void CanvasView::setFullscreen(bool enable) {
 		hor->setSliderPosition(0);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    setTransform(_fullscreenTransform);
+
+    if (_scene->model() != nullptr) {
+      // hack: because window has not yet been maximized, explicitly set size to future size now
+      resize(QApplication::desktop()->screenGeometry().size());
+      
+      qWarning() << viewport()->size();
+      qWarning() << frameRect();
+
+      QSize s = _scene->model()->layerStack()->size();
+      qWarning() << "scene size" << s;
+      QTransform internalSize = QTransform().scale(s.width(), s.height());
+
+      s = viewport()->size();
+      qWarning() << "screen geometry: " << s;
+      QTransform externalSize = QTransform().scale(s.width(), s.height());
+
+      // need to set gigantic scene rect to give us control over position (stupid qt would otherwise align)
+      setSceneRect(QRectF(QPointF(-10000, -10000), QPointF(10000, 10000)));
+      qWarning() << sceneRect();
+
+      // scene coords to view coords
+      QTransform t = (externalSize * _fullscreenTransform * internalSize.inverted()).transposed();
+      setTransform(t);
+      qWarning() << t;
+
+      // fix stuid non-control over translation
+      // TODO: fix fractional errors: apparently centerOn does rounding because of "scroll bar" issues
+      QPointF screenCenter(.5 * viewport()->width(), .5 * viewport()->height());
+      QPointF scenePoint = t.inverted().map(screenCenter);
+      centerOn(scenePoint);
+      qWarning() << scenePoint;
+    }
   } else {
     setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setZoom(_zoom);
+    if (_scene->model() != nullptr)
+      setSceneRect(QRectF(QPointF(), QSizeF(_scene->model()->layerStack()->size())));
   }
 }
   

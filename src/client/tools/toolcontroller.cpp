@@ -17,6 +17,8 @@
    along with Drawpile.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <QtDebug>
+
 #include "toolcontroller.h"
 #include "docks/toolsettingsdock.h"
 

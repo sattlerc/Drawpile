@@ -156,11 +156,16 @@ signals:
 	//! Currently active tool was changed
 	void toolChanged(tools::Tool::Type tool);
 
-private:
+public:
 	tools::ToolSettings *getToolSettingsPage(tools::Tool::Type tool);
 
+private:
 	void updateToolSlot(int i, bool typeChanged);
+
+public:
 	void selectTool(tools::Tool::Type tool);
+
+private:
 	void selectToolSlot(int i);
 	void saveCurrentTool();
 

@@ -200,6 +200,8 @@ public:
 	int getSize() const;
 	bool getSubpixelMode() const;
 
+  void setSize(int x);
+
 	virtual ToolProperties saveToolSettings() override;
 	virtual void restoreToolSettings(const ToolProperties &cfg) override;
 
@@ -226,6 +228,9 @@ public:
 
 	int getSize() const;
 	bool getSubpixelMode() const { return true; }
+
+  void setSize(int x);
+  void setHardness(int x);
 
 	virtual ToolProperties saveToolSettings() override;
 	virtual void restoreToolSettings(const ToolProperties &cfg) override;

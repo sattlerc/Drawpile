@@ -274,6 +274,12 @@ int main(int argc, char *argv[]) {
   }
 
   QString eventDeviceFile = parser.value("whiteboard-device");
+  if (eventDeviceFile.isEmpty()) {
+    char buffer[ADHOC_BUFFER_SIZE];
+    if (select_unique_device(buffer, nullptr) == 0)
+      eventDeviceFile = buffer;
+  }
+  
   cfg.setValue("settings/whiteboard-device", eventDeviceFile);
 
 	const QStringList args = parser.positionalArguments();

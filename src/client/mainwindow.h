@@ -102,6 +102,15 @@ public:
 	//! Save settings and exit
 	void exit();
 
+  paintcore::Point map_point(float x, float y);
+
+  void mouse_up(float x, float y);
+  void mouse_down(float x, float y);
+  void mouse_move(float x, float y);
+  void select_finger();
+  void select_rubber();
+  void select_pen(uint32_t colour);
+
 public slots:
 	// Triggerable actions
 	void showNew();

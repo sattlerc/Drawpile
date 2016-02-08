@@ -20,15 +20,14 @@ set ( DRAWPILE_PROTO_DEFAULT_PORT 27750 )
 ###
 include ( "config/Names.cmake" )
 
-include_directories("/home/noname/smart/adhoc")
-#target_link_libraries("/home/noname/smart/adhoc/libadhoc.a")
-
 ### options ###
 option ( CLIENT "Compile client" ON )
 option ( SERVER "Compile UI-less server" ON )
 option ( TOOLS "Compile extra tools" OFF )
 option ( INSTALL_DOC "Install documents" ON )
 option ( INITSYS "Init system integration" "systemd" )
+
+set( ADHOC_PATH "" CACHE FILEPATH "Path to adhoc library")
 
 if (NOT CMAKE_BUILD_TYPE)
 	message(STATUS "No build type selected, default to Release")

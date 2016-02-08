@@ -177,7 +177,7 @@ int PenSettings::getSize() const
 {
 	return _ui->brushsize->value();
 }
-
+  
 EraserSettings::EraserSettings(QString name, QString title)
 	: ToolSettings(name, title, "draw-eraser"), _ui(0)
 {
@@ -290,6 +290,11 @@ int EraserSettings::getSize() const
 	return _ui->brushsize->value();
 }
 
+void EraserSettings::setSize(int x) {
+	_ui->brushsize->setValue(x);
+	_ui->preview->setSize(x);
+}
+
 bool EraserSettings::getSubpixelMode() const
 {
 	return !_ui->paintmodeHardedge->isChecked();
@@ -388,6 +393,16 @@ paintcore::Brush BrushSettings::getBrush() const
 int BrushSettings::getSize() const
 {
 	return _ui->brushsize->value();
+}
+
+void BrushSettings::setSize(int x) {
+	_ui->brushsize->setValue(x);
+	_ui->preview->setSize(x);
+}
+  
+void BrushSettings::setHardness(int x) {
+	_ui->brushhardness->setValue(x);
+	_ui->preview->setHardness(x);
 }
 
 SmudgeSettings::SmudgeSettings(QString name, QString title)
