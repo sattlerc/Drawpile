@@ -397,7 +397,7 @@ MainWindow::MainWindow(bool restoreWindowPosition)
   if (dev.isEmpty())
     return;
 
-  qInfo() << "Setting up whiteboard at " << dev;
+  qWarning() << "Setting up whiteboard at " << dev;
 
   int fd = ::open(dev.toLocal8Bit(), O_RDONLY | O_NONBLOCK);
   if (fd < 0) {

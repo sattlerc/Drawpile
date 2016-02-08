@@ -24,6 +24,7 @@
 #include <QUrl>
 #include <QSocketNotifier>
 #include <QtGlobal>
+#include <QtDebug>
 
 #include "tools/tool.h"
 
