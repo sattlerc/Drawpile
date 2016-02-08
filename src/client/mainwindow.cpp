@@ -542,7 +542,7 @@ void MainWindow::select_pen(uint32_t c) {
 	//cfg.setValue("pressureopacity", _ui->pressureopacity->isChecked());
 
   printf("%06x\n", c);
-  QColor colour(c & 0xff, (c >> 8) & 0xff, (c >> 16) & 0xff);
+  QColor colour((c >> 16) & 0xff, (c >> 8) & 0xff, c & 0xff);
   qDebug() << "colour " << colour;
   _dock_toolsettings->setForegroundColor(colour);
 }
