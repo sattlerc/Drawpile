@@ -943,44 +943,43 @@ void CanvasView::setFullscreen(bool enable) {
 		hor->setSliderPosition(0);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-
-    if (_scene->model() != nullptr) {
-      // hack: because window has not yet been maximized, explicitly set size to future size now
-      resize(QApplication::desktop()->screenGeometry().size());
-      
-      qWarning() << viewport()->size();
-      qWarning() << frameRect();
-
-      QSize s = _scene->model()->layerStack()->size();
-      qWarning() << "scene size" << s;
-      QTransform internalSize = QTransform().scale(s.width(), s.height());
-
-      s = viewport()->size();
-      qWarning() << "screen geometry: " << s;
-      QTransform externalSize = QTransform().scale(s.width(), s.height());
-
-      // need to set gigantic scene rect to give us control over position (stupid qt would otherwise align)
-      setSceneRect(QRectF(QPointF(-10000, -10000), QPointF(10000, 10000)));
-      qWarning() << sceneRect();
-
-      // scene coords to view coords
-      QTransform t = (externalSize * _fullscreenTransform * internalSize.inverted()).transposed();
-      setTransform(t);
-      qWarning() << t;
-
-      // fix stuid non-control over translation
-      // TODO: fix fractional errors: apparently centerOn does rounding because of "scroll bar" issues
-      QPointF screenCenter(.5 * viewport()->width(), .5 * viewport()->height());
-      QPointF scenePoint = t.inverted().map(screenCenter);
-      centerOn(scenePoint);
-      qWarning() << scenePoint;
-    }
   } else {
     setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setZoom(_zoom);
     if (_scene->model() != nullptr)
       setSceneRect(QRectF(QPointF(), QSizeF(_scene->model()->layerStack()->size())));
+  }
+}
+
+void CanvasView::center() {
+  if (_fullscreen && _scene->model() != nullptr) {
+    qWarning() << viewport()->size();
+    qWarning() << frameRect();
+
+    QSize s = _scene->model()->layerStack()->size();
+    qWarning() << "scene size" << s;
+    QTransform internalSize = QTransform().scale(s.width(), s.height());
+
+    s = viewport()->size();
+    qWarning() << "screen geometry: " << s;
+    QTransform externalSize = QTransform().scale(s.width(), s.height());
+
+    // need to set gigantic scene rect to give us control over position (stupid qt would otherwise align)
+    setSceneRect(QRectF(QPointF(-10000, -10000), QPointF(10000, 10000)));
+    qWarning() << sceneRect();
+
+    // scene coords to view coords
+    QTransform t = (externalSize * _fullscreenTransform * internalSize.inverted()).transposed();
+    setTransform(t);
+    qWarning() << t;
+
+    // fix stuid non-control over translation
+    // TODO: fix fractional errors: apparently centerOn does rounding because of "scroll bar" issues
+    QPointF screenCenter(.5 * viewport()->width(), .5 * viewport()->height());
+    QPointF scenePoint = t.inverted().map(screenCenter);
+    centerOn(scenePoint);
+    qWarning() << scenePoint;
   }
 }
   

@@ -243,7 +243,7 @@ MainWindow::MainWindow(bool restoreWindowPosition)
   
 	// Create canvas view
 	_view = new widgets::CanvasView(this);
-  _view->setFullscreenTransform(cfg.value("settings/fullscreen-transform").value<QTransform>());
+	_view->setFullscreenTransform(cfg.value("settings/fullscreen-transform").value<QTransform>());
 	
 	connect(_dock_toolsettings->getLaserPointerSettings(), SIGNAL(pointerTrackingToggled(bool)), _view, SLOT(setPointerTracking(bool)));
 
@@ -2319,6 +2319,12 @@ void MainWindow::setupActions()
 
 	viewmenu->addSeparator();
 	viewmenu->addAction(fullscreen);
+
+	
+	QAction *center = makeAction("center", 0, tr("&Center"), QString(), QKeySequence(Qt::CTRL + Qt::Key_M));
+	connect(center, SIGNAL(triggered()), _view, SLOT(center()));
+	viewmenu->addAction(center);
+	
 
 	//
 	// Session menu

@@ -147,6 +147,7 @@ class CanvasView : public QGraphicsView
 		void setToolCursor(const QCursor &cursor);
 
     void setFullscreen(bool enable);
+    void center();
 
 	protected:
 		void enterEvent(QEvent *event);
