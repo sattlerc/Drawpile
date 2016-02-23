@@ -962,7 +962,7 @@ void CanvasView::center() {
     QTransform internalSize = QTransform().scale(s.width(), s.height());
 
     s = viewport()->size();
-    qWarning() << "screen geometry: " << s;
+    qWarning() << "viewport size: " << s;
     QTransform externalSize = QTransform().scale(s.width(), s.height());
 
     // need to set gigantic scene rect to give us control over position (stupid qt would otherwise align)
