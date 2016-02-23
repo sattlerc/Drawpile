@@ -515,21 +515,27 @@ void MainWindow::select_finger() {
   _dock_toolsettings->selectTool(tools::Tool::Type::ERASER);
   tools::EraserSettings *settings = dynamic_cast<tools::EraserSettings*>
     (_dock_toolsettings->getToolSettingsPage(tools::Tool::Type::ERASER));
-  settings->setSize(2);
+  
+	QSettings cfg;
+  settings->setSize(cfg.value("settings/whiteboard/penSize", 2).toInt());
 }
 
 void MainWindow::select_rubber() {
   _dock_toolsettings->selectTool(tools::Tool::Type::ERASER);
   tools::EraserSettings *settings = dynamic_cast<tools::EraserSettings*>
     (_dock_toolsettings->getToolSettingsPage(tools::Tool::Type::ERASER));
-  settings->setSize(25);
+
+  QSettings cfg;
+  settings->setSize(cfg.value("settings/whiteboard/eraserSize", 25).toInt());
 }
 
 void MainWindow::select_pen(uint32_t c) {
   _dock_toolsettings->selectTool(tools::Tool::Type::BRUSH);
   tools::BrushSettings *settings = dynamic_cast<tools::BrushSettings*>
     (_dock_toolsettings->getToolSettingsPage(tools::Tool::Type::BRUSH));
-  settings->setSize(1);
+
+  QSettings cfg;
+  settings->setSize(cfg.value("settings/whiteboard/penSize", 1).toInt());
   settings->setHardness(100);
   // m_doc->toolCtrl()->setActiveTool(tools::Tool::Type::PEN);
 

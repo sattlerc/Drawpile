@@ -201,6 +201,12 @@ void SettingsDialog::restoreSettings()
 {
 	QSettings cfg;
 
+  cfg.beginGroup("settings/whiteboard");
+  _ui->whiteboardPenSize->setValue(cfg.value("penSize", 1).toInt());
+  _ui->whiteboardEraserSize->setValue(cfg.value("eraserSize", 15).toInt());
+  _ui->whiteboardFingerSize->setValue(cfg.value("fingerSize", 2).toInt());
+  cfg.endGroup();
+
 	cfg.beginGroup("notifications");
 	_ui->notificationVolume->setValue(cfg.value("volume", 40).toInt());
 	_ui->notifChat->setChecked(cfg.value("chat", true).toBool());
@@ -221,7 +227,6 @@ void SettingsDialog::restoreSettings()
 	}
 
 	_ui->autosaveInterval->setValue(cfg.value("autosave", 5000).toInt() / 1000);
-
 	cfg.endGroup();
 
 	cfg.beginGroup("settings/input");
@@ -276,7 +281,14 @@ void SettingsDialog::restoreSettings()
 void SettingsDialog::rememberSettings()
 {
 	QSettings cfg;
-	// Remember notification settings
+
+  cfg.beginGroup("settings/whiteboard");
+  cfg.setValue("penSize", _ui->whiteboardPenSize->value());
+  cfg.setValue("eraserSize", _ui->whiteboardEraserSize->value());
+  cfg.setValue("fingerSize", _ui->whiteboardFingerSize->value());
+  cfg.endGroup();
+
+  // Remember notification settings
 	cfg.beginGroup("notifications");
 	cfg.setValue("volume", _ui->notificationVolume->value());
 	cfg.setValue("chat", _ui->notifChat->isChecked());
