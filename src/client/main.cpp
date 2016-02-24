@@ -283,8 +283,8 @@ int main(int argc, char *argv[]) {
   cfg.setValue("settings/whiteboard-device", eventDeviceFile);
 
 	const QStringList args = parser.positionalArguments();
-	if(args.count()>1) {
-		QUrl url(args.at(1));
+	if(args.count()>0) {
+		QUrl url(args.at(0));
 		if(url.scheme().length() <= 1) {
 			// no scheme (or a drive letter?) means this is probably a local file
 			url = QUrl::fromLocalFile(args.at(1));
